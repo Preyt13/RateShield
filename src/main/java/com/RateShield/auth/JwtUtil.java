@@ -12,7 +12,7 @@ import java.util.Date;
 public class JwtUtil {
 
     private Key secretKey;
-    private final long EXPIRATION_TIME = 1000 * 60 * 60; // 1 hour
+    private final long EXPIRATION_TIME = 1000 * 60 * 15; // 15 mins
 
     @PostConstruct
     public void init() {

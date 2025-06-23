@@ -1,5 +1,8 @@
 package com.RateShield.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -7,7 +10,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class PingController {
 
     @GetMapping("/api/ping")
-    public String ping() {
-        return "pong";
+    public Map<String, String> ping() {
+        Map<String, String> response = new HashMap<>();
+        response.put("version", "v0.9");
+        response.put("status", "OK");
+        return response;
     }
 }
