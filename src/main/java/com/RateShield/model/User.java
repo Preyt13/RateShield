@@ -1,0 +1,77 @@
+package com.RateShield.model;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "users")
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String username;
+
+    private String password;
+
+    private String tier; // e.g., FREE, PRO
+
+    private boolean isAdmin;
+
+    private Long orgId; // FK-style for now
+
+    public User() {}
+
+    public User(String username, String password, String tier, boolean isAdmin, Long orgId) {
+        this.username = username;
+        this.password = password;
+        this.tier = tier;
+        this.isAdmin = isAdmin;
+        this.orgId = orgId;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public String getTier() {
+        return tier;
+    }
+
+    public boolean isAdmin() {
+        return isAdmin;
+    }
+
+    public Long getOrgId() {
+        return orgId;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setTier(String tier) {
+        this.tier = tier;
+    }
+
+    public void setAdmin(boolean admin) {
+        isAdmin = admin;
+    }
+
+    public void setOrgId(Long orgId) {
+        this.orgId = orgId;
+    }
+}
+

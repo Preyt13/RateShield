@@ -1,8 +1,10 @@
-package com.RateShield.auth;
+package com.RateShield.util;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
+
 
 import jakarta.annotation.PostConstruct;
 import java.security.Key;
@@ -14,20 +16,24 @@ public class JwtUtil {
     private Key secretKey;
     private final long EXPIRATION_TIME = 1000 * 60 * 15; // 15 mins
 
+    @Value("${TOKEN_KEY}")
+    private String tokenKey;
+
     @PostConstruct
     public void init() {
-        // Hardcoded secret for now (in real app use env var or config)
-        this.secretKey = Keys.hmacShaKeyFor("very-strong-and-secure-secret-key-1234567890".getBytes());
+        this.secretKey = Keys.hmacShaKeyFor(tokenKey.getBytes());
     }
 
-    public String generateToken(String username, String tier) {
-        return Jwts.builder()
-                .setSubject(username)
-                .claim("tier", tier)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(secretKey, SignatureAlgorithm.HS256)
-                .compact();
+    public String generateToken(String username, String tier, Long orgId, String role) {
+    return Jwts.builder()
+        .setSubject(username)
+        .claim("tier", tier)
+        .claim("orgId", orgId)
+        .claim("role", role)
+        .setIssuedAt(new Date())
+        .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+        .signWith(secretKey, SignatureAlgorithm.HS256)
+        .compact();
     }
 
     public boolean validateToken(String token) {
@@ -53,6 +59,14 @@ public class JwtUtil {
 
     public String extractTier(String token) {
         return extractAllClaims(token).get("tier", String.class);
+    }
+
+    public String extractOrgId(String token) {
+        return extractAllClaims(token).get("orgId", String.class);
+    }
+
+    public String extractRole(String token) {
+        return extractAllClaims(token).get("role", String.class);
     }
 }
 
