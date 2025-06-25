@@ -31,7 +31,7 @@ public class UserController {
         String token = jwtUtil.generateToken(
             user.getUsername(),
             user.getTier(),
-            user.getOrgId(),
+            user.getOrganization().getId(),
             "BASE_USER"
         );
 

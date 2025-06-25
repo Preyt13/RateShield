@@ -14,20 +14,22 @@ public class User {
 
     private String password;
 
-    private String tier; // e.g., FREE, PRO
+    private String tier; // Feature decision: organisation based tiers cusstom tier based on env and resoruce, customisable in admin console
 
     private boolean isAdmin;
 
-    private Long orgId; // FK-style for now
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "org_id", nullable = false)
+    private Organization organization;
 
     public User() {}
 
-    public User(String username, String password, String tier, boolean isAdmin, Long orgId) {
+    public User(String username, String password, String tier, boolean isAdmin, Organization organization) {
         this.username = username;
         this.password = password;
         this.tier = tier;
         this.isAdmin = isAdmin;
-        this.orgId = orgId;
+        this.organization = organization;
     }
 
     public Long getId() {
@@ -50,8 +52,8 @@ public class User {
         return isAdmin;
     }
 
-    public Long getOrgId() {
-        return orgId;
+    public Organization getOrganization() {
+        return organization;
     }
 
     public void setUsername(String username) {
@@ -70,8 +72,7 @@ public class User {
         isAdmin = admin;
     }
 
-    public void setOrgId(Long orgId) {
-        this.orgId = orgId;
+    public void setOrganization(Organization organization) {
+        this.organization = organization;
     }
 }
-

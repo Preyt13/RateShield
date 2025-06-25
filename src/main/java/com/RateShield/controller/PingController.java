@@ -12,7 +12,7 @@ public class PingController {
     @GetMapping("/api/ping")
     public Map<String, String> ping() {
         Map<String, String> response = new HashMap<>();
-        response.put("version", "v0.9");
+        response.put("version", "v1.0");
         response.put("status", "OK");
         return response;
     }

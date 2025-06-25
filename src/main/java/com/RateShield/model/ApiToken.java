@@ -24,6 +24,7 @@ public class ApiToken {
 
     private LocalDateTime expiresAt;
 
+    //getters -------------------
 
     public Long getId() {
         return id;
@@ -57,6 +58,7 @@ public class ApiToken {
         return expiresAt;
     }
 
+    //setters ---------------------
 
     public void setId(Long id) {
         this.id = id;

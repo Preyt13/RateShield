@@ -20,11 +20,15 @@ public class OrganizationService {
     public boolean registerOrgWithAdmin(String orgName, String adminUsername, String password) {
         if (orgRepo.findByName(orgName).isPresent()) return false;
 
-        Organization org = new Organization(orgName);
-        orgRepo.save(org);
+        Organization org = new Organization(orgName, "FREE");
+        Organization savedOrg = orgRepo.save(org);
 
-        User admin = userService.register(adminUsername, password, "ADMIN", true, org.getId());
+        User admin = userService.register(adminUsername, password, "FREE", true, savedOrg.getId());
         return admin != null;
     }
-}
 
+    public Organization findById(Long id) {
+        return orgRepo.findById(id).orElseThrow(() -> new RuntimeException("Organization not found"));
+    }
+
+}

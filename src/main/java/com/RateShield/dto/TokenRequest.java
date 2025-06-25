@@ -2,9 +2,9 @@ package com.RateShield.dto;
 
 import java.util.List;
 
-public class TokenRequestDTO {
+public class TokenRequest {
     public String tier;
     public List<String> scopes;
-    public int expiresInDays;
+    public double expiresInDays;
 }
 

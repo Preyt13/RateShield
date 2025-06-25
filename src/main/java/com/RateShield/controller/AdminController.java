@@ -2,7 +2,8 @@ package com.RateShield.controller;
 
 import com.RateShield.dto.LoginRequest;
 import com.RateShield.dto.LoginResponse;
-import com.RateShield.dto.TokenRequestDTO;
+import com.RateShield.dto.TokenRequest;
+import com.RateShield.dto.TokenMetadata;
 import com.RateShield.model.ApiToken;
 import com.RateShield.model.User;
 import com.RateShield.service.UserService;
@@ -13,7 +14,8 @@ import io.jsonwebtoken.Claims;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-import java.util.Map;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,7 +44,7 @@ public class AdminController {
         String token = jwtUtil.generateToken(
             user.getUsername(),
             user.getTier(),
-            user.getOrgId(),
+            user.getOrganization().getId(),
             "ADMIN"
         );
 
@@ -50,10 +52,10 @@ public class AdminController {
     }
 
     @PostMapping("/tokens")
-    public ResponseEntity<?> issueToken(@RequestBody TokenRequestDTO dto, @RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<?> issueToken(@RequestBody TokenRequest dto, @RequestHeader("Authorization") String authHeader) {
         String jwt = authHeader.replace("Bearer ", "");
         Claims claims = jwtUtil.extractAllClaims(jwt);
-    
+
         if (!"ADMIN".equals(claims.get("role", String.class))) {
             return ResponseEntity.status(403).body("Forbidden");
         }
@@ -65,18 +67,91 @@ public class AdminController {
         token.setToken(generatedToken);
         token.setOrgId(orgId);
         token.setTier(dto.tier);
-        token.setScopes(String.join(",", dto.scopes));
+
+        // Clean and join scopes
+        String cleanedScopes = dto.scopes.stream()
+            .map(String::trim)
+            .map(path -> path.replaceAll("/+$", "")) // remove trailing slashes
+            .collect(Collectors.joining(","));
+        token.setScopes(cleanedScopes);
+
         token.setRevoked(false);
         token.setCreatedAt(LocalDateTime.now());
-        token.setExpiresAt(LocalDateTime.now().plusDays(dto.expiresInDays));
+
+        long secondsToExpiry = (long) (dto.expiresInDays * 24 * 60 * 60);
+        token.setExpiresAt(LocalDateTime.now().plusSeconds(secondsToExpiry));
 
         apiTokenRepo.save(token);
 
-        return ResponseEntity.ok(Map.of(
-            "token", generatedToken,
-            "expiresAt", token.getExpiresAt()
-        ));
+        return ResponseEntity.ok(
+            new TokenMetadata(
+                token.getId(),
+                token.getToken(),
+                token.getTier(),
+                token.getScopes(),
+                token.getCreatedAt(),
+                token.getExpiresAt(),
+                token.getOrgId(),
+                token.isRevoked()
+            )
+        );
     }
 
-}
+    @GetMapping("/tokens/{id}")
+    public ResponseEntity<?> getTokenMetadata(@PathVariable Long id, @RequestHeader("Authorization") String authHeader) {
+        String jwt = authHeader.replace("Bearer ", "");
+        Claims claims = jwtUtil.extractAllClaims(jwt);
 
+        if (!"ADMIN".equals(claims.get("role", String.class))) {
+            return ResponseEntity.status(403).body("Forbidden");
+        }
+
+        Long adminOrgId = claims.get("orgId", Long.class);
+
+        return apiTokenRepo.findById(id)
+            .map(token -> {
+                if (!token.getOrgId().equals(adminOrgId)) {
+                    return ResponseEntity.status(403).body("Access denied");
+                }
+
+                return ResponseEntity.ok(new TokenMetadata(
+                    token.getId(),
+                    token.getToken(),
+                    token.getTier(),
+                    token.getScopes(),
+                    token.getCreatedAt(),
+                    token.getExpiresAt(),
+                    token.getOrgId(),
+                    token.isRevoked()
+                ));
+            })
+            .orElse(ResponseEntity.status(404).body("Token not found"));
+    }
+
+    @GetMapping("/tokens")
+    public ResponseEntity<?> getAllTokensForOrg(@RequestHeader("Authorization") String authHeader) {
+        String jwt = authHeader.replace("Bearer ", "");
+        Claims claims = jwtUtil.extractAllClaims(jwt);
+
+        if (!"ADMIN".equals(claims.get("role", String.class))) {
+            return ResponseEntity.status(403).body("Forbidden");
+        }
+
+        Long orgId = claims.get("orgId", Long.class);
+
+        List<TokenMetadata> tokens = apiTokenRepo.findByOrgId(orgId).stream()
+            .map(token -> new TokenMetadata(
+                token.getId(),
+                token.getToken(),
+                token.getTier(),
+                token.getScopes(),
+                token.getCreatedAt(),
+                token.getExpiresAt(),
+                token.getOrgId(),
+                token.isRevoked()
+            ))
+            .collect(Collectors.toList());
+
+        return ResponseEntity.ok(tokens);
+    }
+}
