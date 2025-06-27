@@ -4,21 +4,16 @@ import com.RateShield.dto.LoginRequest;
 import com.RateShield.dto.LoginResponse;
 import com.RateShield.dto.TokenRequest;
 import com.RateShield.dto.TokenMetadata;
-import com.RateShield.model.ApiToken;
 import com.RateShield.model.User;
 import com.RateShield.service.UserService;
+import com.RateShield.service.TokenService;
 import com.RateShield.util.JwtUtil;
-import com.RateShield.repository.ApiTokenRepository;
-
 import io.jsonwebtoken.Claims;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/admin")
@@ -26,12 +21,12 @@ public class AdminController {
 
     private final UserService userService;
     private final JwtUtil jwtUtil;
-    private final ApiTokenRepository apiTokenRepo;
+    private final TokenService tokenService;
 
-    public AdminController(UserService userService, JwtUtil jwtUtil, ApiTokenRepository apiTokenRepo) {
+    public AdminController(UserService userService, JwtUtil jwtUtil, TokenService tokenService) {
         this.userService = userService;
         this.jwtUtil = jwtUtil;
-        this.apiTokenRepo = apiTokenRepo;
+        this.tokenService = tokenService;
     }
 
     @PostMapping("/login")
@@ -64,40 +59,8 @@ public class AdminController {
         }
 
         UUID orgId = UUID.fromString(claims.get("orgId", String.class));
-        String generatedToken = UUID.randomUUID().toString();
-
-        ApiToken token = new ApiToken();
-        token.setToken(generatedToken);
-        token.setOrgId(orgId);
-        token.setTier(dto.tier);
-
-        // Clean scopes
-        String cleanedScopes = dto.scopes.stream()
-            .map(String::trim)
-            .map(path -> path.replaceAll("/+$", ""))
-            .collect(Collectors.joining(","));
-        token.setScopes(cleanedScopes);
-
-        token.setRevoked(false);
-        token.setCreatedAt(LocalDateTime.now());
-
-        long secondsToExpiry = (long) (dto.expiresInDays * 24 * 60 * 60);
-        token.setExpiresAt(LocalDateTime.now().plusSeconds(secondsToExpiry));
-
-        apiTokenRepo.save(token);
-
-        return ResponseEntity.ok(
-            new TokenMetadata(
-                token.getId(),
-                token.getToken(),
-                token.getTier(),
-                token.getScopes(),
-                token.getCreatedAt(),
-                token.getExpiresAt(),
-                token.getOrgId(),
-                token.isRevoked()
-            )
-        );
+        TokenMetadata metadata = tokenService.issueScopedToken(dto, orgId);
+        return ResponseEntity.ok(metadata);
     }
 
     @GetMapping("/tokens/{id}")
@@ -112,26 +75,10 @@ public class AdminController {
             return ResponseEntity.status(403).body("Forbidden");
         }
 
-        UUID adminOrgId = UUID.fromString(claims.get("orgId", String.class));
-
-        return apiTokenRepo.findById(id)
-            .map(token -> {
-                if (!token.getOrgId().equals(adminOrgId)) {
-                    return ResponseEntity.status(403).body("Access denied");
-                }
-
-                return ResponseEntity.ok(new TokenMetadata(
-                    token.getId(),
-                    token.getToken(),
-                    token.getTier(),
-                    token.getScopes(),
-                    token.getCreatedAt(),
-                    token.getExpiresAt(),
-                    token.getOrgId(),
-                    token.isRevoked()
-                ));
-            })
-            .orElse(ResponseEntity.status(404).body("Token not found"));
+        UUID orgId = UUID.fromString(claims.get("orgId", String.class));
+        return tokenService.getTokenMetadataById(id, orgId)
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElse(ResponseEntity.status(404).body("Token not found"));
     }
 
     @GetMapping("/tokens")
@@ -144,20 +91,7 @@ public class AdminController {
         }
 
         UUID orgId = UUID.fromString(claims.get("orgId", String.class));
-
-        List<TokenMetadata> tokens = apiTokenRepo.findByOrgId(orgId).stream()
-            .map(token -> new TokenMetadata(
-                token.getId(),
-                token.getToken(),
-                token.getTier(),
-                token.getScopes(),
-                token.getCreatedAt(),
-                token.getExpiresAt(),
-                token.getOrgId(),
-                token.isRevoked()
-            ))
-            .collect(Collectors.toList());
-
+        List<TokenMetadata> tokens = tokenService.getAllTokensForOrg(orgId);
         return ResponseEntity.ok(tokens);
     }
 }

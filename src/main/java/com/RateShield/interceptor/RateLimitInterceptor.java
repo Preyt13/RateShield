@@ -75,7 +75,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             return true;
 
         } else {
-            // UUID-based API token (grunts)
+            // UUID-based API token (bots)
             ApiToken apiToken = apiTokenRepo.findByToken(token).orElse(null);
 
             if (apiToken == null || apiToken.isRevoked() || apiToken.getExpiresAt().isBefore(LocalDateTime.now())) {

@@ -2,9 +2,11 @@ package com.RateShield.service;
 
 import com.RateShield.dto.CreateServiceRequest;
 import com.RateShield.dto.ServiceInfoResponse;
+import com.RateShield.model.RegisteredService;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Optional;
 
 /**
  * Service interface for managing API services (base URLs) under environments and organizations.
@@ -44,5 +46,13 @@ public interface ServiceRegistryService {
      * @return true if service exists, false otherwise
      */
     boolean serviceExistsInEnv(UUID envId, String serviceName);
+
+    /**
+     * Retrieves a RegisteredService model by ID (used for tier resolution).
+     *
+     * @param serviceId the UUID of the service
+     * @return optional RegisteredService
+     */
+    Optional<RegisteredService> getServiceById(UUID serviceId);
 }
 

@@ -53,4 +53,11 @@ public class UserService {
         User user = new User(username, encoder.encode(password), tier, isAdmin, org);
         return userRepo.save(user);
     }
+
+    public User findByUsername(String username) {
+        return userRepo.findByUsername(username)
+                   .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+
 }

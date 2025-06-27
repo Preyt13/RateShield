@@ -8,6 +8,7 @@ import com.RateShield.service.ServiceRegistryService;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -71,5 +72,10 @@ public class ServiceRegistryServiceImpl implements ServiceRegistryService {
                 .rateLimitTier(svc.getRateLimitTier())
                 .build();
     }
+
+    @Override
+    public Optional<RegisteredService> getServiceById(UUID serviceId) {
+        return serviceRepository.findById(serviceId);
+}
 }
 

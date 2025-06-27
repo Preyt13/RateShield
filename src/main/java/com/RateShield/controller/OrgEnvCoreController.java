@@ -2,10 +2,7 @@ package com.RateShield.controller;
 
 import com.RateShield.model.Environment;
 import com.RateShield.model.Organization;
-import com.RateShield.model.User;
-import com.RateShield.repository.EnvironmentRepository;
-import com.RateShield.repository.OrganizationRepository;
-import com.RateShield.repository.UserRepository;
+import com.RateShield.service.OrganizationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,53 +14,35 @@ import java.util.UUID;
 @RequestMapping("/core/orgs")
 public class OrgEnvCoreController {
 
-    private final UserRepository userRepo;
-    private final OrganizationRepository orgRepo;
-    private final EnvironmentRepository envRepo;
+    private final OrganizationService orgService;
 
-    public OrgEnvCoreController(UserRepository userRepo,
-                                OrganizationRepository orgRepo,
-                                EnvironmentRepository envRepo) {
-        this.userRepo = userRepo;
-        this.orgRepo = orgRepo;
-        this.envRepo = envRepo;
+    public OrgEnvCoreController(OrganizationService orgService) {
+        this.orgService = orgService;
     }
 
-    /**
-     * Fetch organization info for the currently authenticated user.
-     * Even if orgId in path doesn't match user's actual org, the user is always rerouted to their own org.
-     */
     @GetMapping("/{orgId}")
     public ResponseEntity<?> getOrgInfo(@PathVariable UUID orgId,
                                         @RequestHeader("X-Username") String username) {
-        User user = userRepo.findByUsername(username).orElse(null);
-        if (user == null) return ResponseEntity.status(404).body("User not found");
-
-        Organization actualOrg = user.getOrganization();
-
-        return ResponseEntity.ok(Map.of(
-                "id", actualOrg.getId(),
-                "name", actualOrg.getName(),
-                "tier", actualOrg.getPlan()
-        ));
+        try {
+            Organization actualOrg = orgService.getOrgForUser(username);
+            return ResponseEntity.ok(Map.of(
+                    "id", actualOrg.getId(),
+                    "name", actualOrg.getName(),
+                    "tier", actualOrg.getPlan()
+            ));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(404).body("User or Organization not found");
+        }
     }
 
-    /**
-     * Return all environments in the user's org.
-     * The orgId in path is ignored if it doesn't match caller's org — rerouted silently.
-     */
     @GetMapping("/{orgId}/env")
     public ResponseEntity<?> getEnvironments(@PathVariable UUID orgId,
                                              @RequestHeader("X-Username") String username) {
-        User user = userRepo.findByUsername(username).orElse(null);
-        if (user == null) return ResponseEntity.status(404).body("User not found");
-
-        UUID actualOrgId = user.getOrganization().getId();
-        if (!actualOrgId.equals(orgId)) {
-            orgId = actualOrgId; // Reroute
+        try {
+            List<Environment> envs = orgService.getEnvironmentsForUser(username, orgId);
+            return ResponseEntity.ok(envs);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(404).body("User or Organization not found");
         }
-
-        List<Environment> envs = envRepo.findByOrgId(orgId);
-        return ResponseEntity.ok(envs);
     }
 }

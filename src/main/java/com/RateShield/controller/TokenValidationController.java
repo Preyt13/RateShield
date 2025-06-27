@@ -1,36 +1,33 @@
 package com.RateShield.controller;
 
 import com.RateShield.model.ApiToken;
-import com.RateShield.repository.ApiTokenRepository;
-import com.RateShield.util.JwtUtil;
+import com.RateShield.service.TokenService;
 import io.jsonwebtoken.Claims;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 
 @RestController
 public class TokenValidationController {
 
-    private final ApiTokenRepository tokenRepo;
-    private final JwtUtil jwtUtil;
+    private final TokenService tokenService;
 
-    public TokenValidationController(ApiTokenRepository tokenRepo, JwtUtil jwtUtil) {
-        this.tokenRepo = tokenRepo;
-        this.jwtUtil = jwtUtil;
+    public TokenValidationController(TokenService tokenService) {
+        this.tokenService = tokenService;
     }
 
     @GetMapping("/validate-token")
     public ResponseEntity<?> validateToken(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
 
+        // JWT check
         if (token.split("\\.").length == 3) {
-            if (!jwtUtil.validateToken(token)) {
+            if (!tokenService.validateJwtToken(token)) {
                 return ResponseEntity.status(401).body("Invalid or expired JWT");
             }
 
-            Claims claims = jwtUtil.extractAllClaims(token);
+            Claims claims = tokenService.extractClaims(token);
             return ResponseEntity.ok(Map.of(
                 "valid", true,
                 "user", claims.getSubject(),
@@ -39,23 +36,20 @@ public class TokenValidationController {
                 "role", claims.get("role", String.class),
                 "expiresAt", claims.getExpiration()
             ));
-        } else {
-            ApiToken apiToken = tokenRepo.findByToken(token)
-                    .filter(t -> !t.isRevoked())
-                    .filter(t -> t.getExpiresAt().isAfter(LocalDateTime.now()))
-                    .orElse(null);
-
-            if (apiToken == null) {
-                return ResponseEntity.status(401).body("Invalid or expired token");
-            }
-
-            return ResponseEntity.ok(Map.of(
-                "valid", true,
-                "tier", apiToken.getTier(),
-                "orgId", apiToken.getOrgId(),
-                "scopes", apiToken.getScopes().split(","),
-                "expiresAt", apiToken.getExpiresAt()
-            ));
         }
+
+        // API Token check (UUID format)
+            return tokenService.getValidApiToken(token)
+            .map(t -> ResponseEntity.ok(Map.of(
+                "valid", true,
+                "tier", t.getTier(),
+                "orgId", t.getOrgId(),
+                "scopes", t.getScopes().split(","),
+                "expiresAt", t.getExpiresAt()
+            )))
+            .orElse(ResponseEntity.status(401).body(Map.of(
+                "valid", false,
+                "error", "Invalid or expired token"
+            )));
     }
 }

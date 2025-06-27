@@ -31,4 +31,7 @@ public class Environment {
 
     @Column(nullable = false)
     private Instant createdAt;
+
+    @Column(nullable = false)
+    private String rateLimitTier;
 }

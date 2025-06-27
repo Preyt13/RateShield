@@ -15,6 +15,9 @@ public class Organization {
 
     private String plan;
 
+    @Column(nullable = false)
+    private String rateLimitTier;
+
     @OneToMany(mappedBy = "organization", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<User> users;
 
