@@ -8,6 +8,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -21,17 +22,28 @@ public class UserService {
         this.orgRepo = orgRepo;
     }
 
+    /**
+     * Authenticates a user by username and password.
+     * Returns null if credentials are invalid.
+     */
     public User login(String username, String password) {
         return userRepo.findByUsername(username)
                 .filter(u -> encoder.matches(password, u.getPassword()))
                 .orElse(null);
     }
 
+    /**
+     * Checks if a user already exists with the given username.
+     */
     public boolean userExists(String username) {
         return userRepo.findByUsername(username).isPresent();
     }
 
-    public User register(String username, String password, String tier, boolean isAdmin, Long orgId) {
+    /**
+     * Registers a new user under the specified organization.
+     * Returns the created User or null if org not found or user exists.
+     */
+    public User register(String username, String password, String tier, boolean isAdmin, UUID orgId) {
         if (userExists(username)) return null;
 
         Optional<Organization> orgOpt = orgRepo.findById(orgId);

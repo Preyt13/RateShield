@@ -10,8 +10,7 @@ import java.util.UUID;
 @Repository
 public interface EnvironmentRepository extends JpaRepository<Environment, UUID> {
 
-    List<Environment> findByOrgId(Long orgId);
+    List<Environment> findByOrgId(UUID orgId);
 
-    List<Environment> findByOrgIdAndIsBaseEnv(Long orgId, boolean isBaseEnv);
+    List<Environment> findByOrgIdAndIsBaseEnv(UUID orgId, boolean isBaseEnv);
 }
-

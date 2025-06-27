@@ -17,19 +17,18 @@ public class Environment {
     @GeneratedValue
     private UUID id;
 
-    @Column(nullable = false)
-    private String name; // e.g. "DEV", "PROD"
+    @Column(nullable = false)     //Name of the env e.g. PROD DEV UAT
+    private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = false)     //Variable for the "BASE" Env. All orgs have access to "BASE" env upon registeration..
     private boolean isBaseEnv;
 
     @Column(nullable = false)
-    private Long orgId;
+    private UUID orgId;
 
-    @Column(nullable = false)
+    @Column(nullable = false)     //Storing user's ID as CreatedBy
     private UUID createdBy;
 
     @Column(nullable = false)
     private Instant createdAt;
 }
-

@@ -14,6 +14,5 @@ public interface RegisteredServiceRepository extends JpaRepository<RegisteredSer
 
     List<RegisteredService> findByEnvId(UUID envId);
 
-    boolean existsByNameAndEnvId(String name, UUID envId ); // Optional uniqueness check
+    boolean existsByNameAndEnvId(String name, UUID envId); // Optional uniqueness check
 }
-

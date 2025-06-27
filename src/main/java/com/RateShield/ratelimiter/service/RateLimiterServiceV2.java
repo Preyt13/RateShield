@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.UUID;
 
 @Service
 public class RateLimiterServiceV2 {
@@ -21,7 +22,7 @@ public class RateLimiterServiceV2 {
         this.planRateConfig = planRateConfig;
     }
 
-    public boolean isAllowed(Long orgId, String tokenId) {
+    public boolean isAllowed(UUID orgId, String tokenId) {
         Organization org = organizationService.findById(orgId);
         String plan = org.getPlan();
 

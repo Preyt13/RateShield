@@ -22,8 +22,8 @@ public class OrgEnvCoreController {
     private final EnvironmentRepository envRepo;
 
     public OrgEnvCoreController(UserRepository userRepo,
-                            OrganizationRepository orgRepo,
-                            EnvironmentRepository envRepo) {
+                                OrganizationRepository orgRepo,
+                                EnvironmentRepository envRepo) {
         this.userRepo = userRepo;
         this.orgRepo = orgRepo;
         this.envRepo = envRepo;
@@ -44,7 +44,7 @@ public class OrgEnvCoreController {
         return ResponseEntity.ok(Map.of(
                 "id", actualOrg.getId(),
                 "name", actualOrg.getName(),
-                "tier", actualOrg.getPlan() 
+                "tier", actualOrg.getPlan()
         ));
     }
 
@@ -53,12 +53,12 @@ public class OrgEnvCoreController {
      * The orgId in path is ignored if it doesn't match caller's org — rerouted silently.
      */
     @GetMapping("/{orgId}/env")
-    public ResponseEntity<?> getEnvironments(@PathVariable Long orgId,
+    public ResponseEntity<?> getEnvironments(@PathVariable UUID orgId,
                                              @RequestHeader("X-Username") String username) {
         User user = userRepo.findByUsername(username).orElse(null);
         if (user == null) return ResponseEntity.status(404).body("User not found");
 
-        Long actualOrgId = user.getOrganization().getId();
+        UUID actualOrgId = user.getOrganization().getId();
         if (!actualOrgId.equals(orgId)) {
             orgId = actualOrgId; // Reroute
         }

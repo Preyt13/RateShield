@@ -2,17 +2,20 @@ package com.RateShield.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 public class ApiToken {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue
+    private UUID id;
 
+    @Column(nullable = false, unique = true)
     private String token;
 
-    private Long orgId;
+    @Column(nullable = false)
+    private UUID orgId;
 
     private String tier;
 
@@ -24,71 +27,23 @@ public class ApiToken {
 
     private LocalDateTime expiresAt;
 
-    //getters -------------------
+    // Getters
+    public UUID getId() { return id; }
+    public String getToken() { return token; }
+    public UUID getOrgId() { return orgId; }
+    public String getTier() { return tier; }
+    public String getScopes() { return scopes; }
+    public boolean isRevoked() { return revoked; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getExpiresAt() { return expiresAt; }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public Long getOrgId() {
-        return orgId;
-    }
-
-    public String getTier() {
-        return tier;
-    }
-
-    public String getScopes() {
-        return scopes;
-    }
-
-    public boolean isRevoked() {
-        return revoked;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getExpiresAt() {
-        return expiresAt;
-    }
-
-    //setters ---------------------
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    public void setOrgId(Long orgId) {
-        this.orgId = orgId;
-    }
-
-    public void setTier(String tier) {
-        this.tier = tier;
-    }
-
-    public void setScopes(String scopes) {
-        this.scopes = scopes;
-    }
-
-    public void setRevoked(boolean revoked) {
-        this.revoked = revoked;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public void setExpiresAt(LocalDateTime expiresAt) {
-        this.expiresAt = expiresAt;
-    }
+    // Setters
+    public void setId(UUID id) { this.id = id; }
+    public void setToken(String token) { this.token = token; }
+    public void setOrgId(UUID orgId) { this.orgId = orgId; }
+    public void setTier(String tier) { this.tier = tier; }
+    public void setScopes(String scopes) { this.scopes = scopes; }
+    public void setRevoked(boolean revoked) { this.revoked = revoked; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
 }

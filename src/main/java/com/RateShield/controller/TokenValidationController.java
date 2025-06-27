@@ -35,7 +35,7 @@ public class TokenValidationController {
                 "valid", true,
                 "user", claims.getSubject(),
                 "tier", claims.get("tier", String.class),
-                "orgId", claims.get("orgId", Long.class),
+                "orgId", claims.get("orgId", String.class),
                 "role", claims.get("role", String.class),
                 "expiresAt", claims.getExpiration()
             ));

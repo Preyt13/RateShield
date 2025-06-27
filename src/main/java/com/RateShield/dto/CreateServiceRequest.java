@@ -11,8 +11,8 @@ import java.util.UUID;
 public class CreateServiceRequest {
     private String name;
     private String baseUrl;
-    private Long envId;
-    private Long orgId;
+    private UUID envId;
+    private UUID orgId;
     private String rateLimitTier; // optional
 }
 

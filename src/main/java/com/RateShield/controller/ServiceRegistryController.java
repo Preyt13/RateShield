@@ -2,6 +2,9 @@ package com.RateShield.controller;
 
 import com.RateShield.dto.CreateServiceRequest;
 import com.RateShield.dto.ServiceInfoResponse;
+import com.RateShield.model.User;
+import com.RateShield.repository.EnvironmentRepository;
+import com.RateShield.repository.UserRepository;
 import com.RateShield.service.ServiceRegistryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,59 +14,80 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/services")
+@RequestMapping("/core/orgs")
 public class ServiceRegistryController {
 
     private final ServiceRegistryService serviceRegistryService;
+    private final UserRepository userRepo;
+    private final EnvironmentRepository envRepo;
 
-    public ServiceRegistryController(ServiceRegistryService serviceRegistryService) {
+    public ServiceRegistryController(ServiceRegistryService serviceRegistryService,
+                                     UserRepository userRepo,
+                                     EnvironmentRepository envRepo) {
         this.serviceRegistryService = serviceRegistryService;
+        this.userRepo = userRepo;
+        this.envRepo = envRepo;
     }
 
     /**
-     * Register a new service under a given org and environment.
-     * The orgId should match the org associated with the authenticated user.
-     * For now, orgId is passed via header for simplicity — in real systems, this is extracted from a verified JWT.
+     * Register a new service under a specific org + env.
+     * Authenticated user must be admin and belong to that org.
      */
-    @PostMapping("/register")
-    public ResponseEntity<?> registerService(
-            @RequestHeader("X-Org-ID") UUID requesterOrgId,
-            @RequestBody CreateServiceRequest request
-    ) {
-        // Enforce org ownership: prevent registering into someone else's org
-        if (!requesterOrgId.equals(request.getOrgId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("Unauthorized: orgId in request does not match your org.");
+    @PostMapping("/{orgId}/env/{envId}/services")
+    public ResponseEntity<?> registerService(@PathVariable UUID orgId,
+                                             @PathVariable UUID envId,
+                                             @RequestHeader("X-Username") String username,
+                                             @RequestBody CreateServiceRequest request) {
+
+        User user = userRepo.findByUsername(username).orElse(null);
+        if (user == null || !user.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Only admins can register services");
         }
+
+        UUID userOrgId = user.getOrganization().getId();
+        if (!userOrgId.equals(orgId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Cross-org registration not allowed");
+        }
+
+        // Validate env belongs to org
+        boolean envValid = envRepo.findByOrgId(userOrgId).stream()
+                .anyMatch(env -> env.getId().equals(envId));
+
+        if (!envValid) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid environment for your org");
+        }
+
+        request.setOrgId(orgId);
+        request.setEnvId(envId);
 
         ServiceInfoResponse response = serviceRegistryService.createService(request);
         return ResponseEntity.ok(response);
     }
 
     /**
-     * Fetch all services for the calling user's organization.
-     * Uses the X-Org-ID header to simulate token-derived org ID.
+     * View all services in an environment within your own org
      */
-    @GetMapping("/my-org")
-    public ResponseEntity<List<ServiceInfoResponse>> getMyOrgServices(
-            @RequestHeader("X-Org-ID") UUID orgId
-    ) {
-        List<ServiceInfoResponse> services = serviceRegistryService.getServicesByOrg(orgId);
-        return ResponseEntity.ok(services);
-    }
+    @GetMapping("/{orgId}/env/{envId}/services")
+    public ResponseEntity<?> getServicesForEnv(@PathVariable UUID orgId,
+                                               @PathVariable UUID envId,
+                                               @RequestHeader("X-Username") String username) {
 
-    /**
-     * Fetch all services in a specific environment (must belong to caller's org).
-     * The backend should verify env ownership; for now we assume valid access via header.
-     */
-    @GetMapping("/env/{envId}")
-    public ResponseEntity<List<ServiceInfoResponse>> getServicesByEnv(
-            @RequestHeader("X-Org-ID") UUID orgId,
-            @PathVariable UUID envId
-    ) {
-        // TODO: Add enforcement that envId belongs to orgId
+        User user = userRepo.findByUsername(username).orElse(null);
+        if (user == null) return ResponseEntity.status(404).body("User not found");
+
+        UUID userOrgId = user.getOrganization().getId();
+        if (!userOrgId.equals(orgId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access to other orgs denied");
+        }
+
+        boolean envValid = envRepo.findByOrgId(userOrgId).stream()
+                .anyMatch(env -> env.getId().equals(envId));
+
+        if (!envValid) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid env for this org");
+        }
+
         List<ServiceInfoResponse> services = serviceRegistryService.getServicesByEnv(envId);
         return ResponseEntity.ok(services);
     }
 }
-

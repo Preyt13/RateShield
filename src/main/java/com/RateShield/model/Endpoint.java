@@ -21,18 +21,17 @@ public class Endpoint {
     private UUID serviceId;
 
     @Column(nullable = false)
-    private String path; // e.g. "/api/ping"
+    private String path;
 
     @Column(nullable = false)
-    private String method; // GET, POST, etc.
+    private String method;
 
-    private String groupLabel; // e.g. "api"
+    private String groupLabel;
 
-    private String rateLimitTier; // Optional override
+    private String rateLimitTier;
 
-    private String scopeKey; // e.g. "SERVICE.PING.READ"
+    private String scopeKey;
 
     @Column(nullable = false)
     private Instant createdAt;
 }
-

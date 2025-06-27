@@ -12,13 +12,13 @@ import com.RateShield.repository.ApiTokenRepository;
 
 import io.jsonwebtoken.Claims;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/admin")
@@ -52,7 +52,10 @@ public class AdminController {
     }
 
     @PostMapping("/tokens")
-    public ResponseEntity<?> issueToken(@RequestBody TokenRequest dto, @RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<?> issueToken(
+        @RequestBody TokenRequest dto,
+        @RequestHeader("Authorization") String authHeader
+    ) {
         String jwt = authHeader.replace("Bearer ", "");
         Claims claims = jwtUtil.extractAllClaims(jwt);
 
@@ -60,7 +63,7 @@ public class AdminController {
             return ResponseEntity.status(403).body("Forbidden");
         }
 
-        Long orgId = claims.get("orgId", Long.class);
+        UUID orgId = UUID.fromString(claims.get("orgId", String.class));
         String generatedToken = UUID.randomUUID().toString();
 
         ApiToken token = new ApiToken();
@@ -68,10 +71,10 @@ public class AdminController {
         token.setOrgId(orgId);
         token.setTier(dto.tier);
 
-        // Clean and join scopes
+        // Clean scopes
         String cleanedScopes = dto.scopes.stream()
             .map(String::trim)
-            .map(path -> path.replaceAll("/+$", "")) // remove trailing slashes
+            .map(path -> path.replaceAll("/+$", ""))
             .collect(Collectors.joining(","));
         token.setScopes(cleanedScopes);
 
@@ -98,7 +101,10 @@ public class AdminController {
     }
 
     @GetMapping("/tokens/{id}")
-    public ResponseEntity<?> getTokenMetadata(@PathVariable Long id, @RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<?> getTokenMetadata(
+        @PathVariable UUID id,
+        @RequestHeader("Authorization") String authHeader
+    ) {
         String jwt = authHeader.replace("Bearer ", "");
         Claims claims = jwtUtil.extractAllClaims(jwt);
 
@@ -106,7 +112,7 @@ public class AdminController {
             return ResponseEntity.status(403).body("Forbidden");
         }
 
-        Long adminOrgId = claims.get("orgId", Long.class);
+        UUID adminOrgId = UUID.fromString(claims.get("orgId", String.class));
 
         return apiTokenRepo.findById(id)
             .map(token -> {
@@ -137,7 +143,7 @@ public class AdminController {
             return ResponseEntity.status(403).body("Forbidden");
         }
 
-        Long orgId = claims.get("orgId", Long.class);
+        UUID orgId = UUID.fromString(claims.get("orgId", String.class));
 
         List<TokenMetadata> tokens = apiTokenRepo.findByOrgId(orgId).stream()
             .map(token -> new TokenMetadata(

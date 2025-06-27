@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 import java.util.List;
 import java.util.Arrays;
+import java.util.UUID;
 
 @Component
 public class RateLimitInterceptor implements HandlerInterceptor {
@@ -62,7 +63,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             }
 
             Claims claims = jwtUtil.extractAllClaims(token);
-            Long orgId = claims.get("orgId", Long.class);
+            UUID orgId = UUID.fromString(claims.get("orgId", String.class));
             String tokenId = claims.getSubject();
 
             if (!rateLimiterServiceV2.isAllowed(orgId, tokenId)) {
@@ -100,7 +101,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             }
 
             // Rate limit check after scope
-            Long orgId = apiToken.getOrgId();
+            UUID orgId = apiToken.getOrgId();
             String tokenId = apiToken.getToken();
 
             if (!rateLimiterServiceV2.isAllowed(orgId, tokenId)) {

@@ -9,12 +9,13 @@ import org.springframework.beans.factory.annotation.Value;
 import jakarta.annotation.PostConstruct;
 import java.security.Key;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtUtil {
 
     private Key secretKey;
-    private final long EXPIRATION_TIME = 1000 * 60 * 15; // 15 mins
+    private static final long EXPIRATION_TIME = 1000 * 60 * 15; // 15 mins
 
     @Value("${TOKEN_KEY}")
     private String tokenKey;
@@ -24,7 +25,11 @@ public class JwtUtil {
         this.secretKey = Keys.hmacShaKeyFor(tokenKey.getBytes());
     }
 
-    public String generateToken(String username, String tier, Long orgId, String role) {
+    /**
+     * Generate a signed JWT with custom claims.
+     */
+
+    public String generateToken(String username, String tier, UUID orgId, String role) {
     return Jwts.builder()
         .setSubject(username)
         .claim("tier", tier)
@@ -36,6 +41,10 @@ public class JwtUtil {
         .compact();
     }
 
+    /**
+     * Validate token signature and expiration.
+     */
+
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
@@ -44,6 +53,10 @@ public class JwtUtil {
             return false;
         }
     }
+
+    /**
+     * Extract all JWT claims from a token.
+     */
 
     public Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
@@ -61,8 +74,9 @@ public class JwtUtil {
         return extractAllClaims(token).get("tier", String.class);
     }
 
-    public String extractOrgId(String token) {
-        return extractAllClaims(token).get("orgId", String.class);
+    public UUID extractOrgId(String token) {
+        String raw = extractAllClaims(token).get("orgId", String.class);
+        return UUID.fromString(raw); // convert properly here
     }
 
     public String extractRole(String token) {

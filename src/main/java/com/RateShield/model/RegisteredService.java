@@ -17,11 +17,11 @@ public class RegisteredService {
     @GeneratedValue
     private UUID id;
 
-    @Column(nullable = false)
-    private String name; // e.g. "AuthService"
+    @Column(nullable = false)    //name of the service e.g. userService
+    private String name;
 
-    @Column(nullable = false)
-    private String baseUrl; // e.g. "https://api.rateshield.com"
+    @Column(nullable = false)   //Base Url for this service e.g. https://api.rateshield.com/
+    private String baseUrl;
 
     @Column(nullable = false)
     private UUID envId;
@@ -29,9 +29,8 @@ public class RegisteredService {
     @Column(nullable = false)
     private UUID orgId;
 
-    private String rateLimitTier; // Optional override, e.g. "MEDIUM"
+    private String rateLimitTier;  //Override mechanism : Rate Limit for specific service
 
     @Column(nullable = false)
     private Instant createdAt;
 }
-

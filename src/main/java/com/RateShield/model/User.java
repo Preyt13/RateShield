@@ -1,20 +1,21 @@
 package com.RateShield.model;
 
 import jakarta.persistence.*;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue
+    private UUID id;
 
     private String username;
 
     private String password;
 
-    private String tier; // Feature decision: organisation based tiers cusstom tier based on env and resoruce, customisable in admin console
+    private String tier;   // Feature decision: organisation based tiers cusstom tier based on env and resoruce, customisable in admin console
 
     private boolean isAdmin;
 
@@ -32,47 +33,16 @@ public class User {
         this.organization = organization;
     }
 
-    public Long getId() {
-        return id;
-    }
+    public UUID getId() { return id; }
+    public String getUsername() { return username; }
+    public String getPassword() { return password; }
+    public String getTier() { return tier; }
+    public boolean isAdmin() { return isAdmin; }
+    public Organization getOrganization() { return organization; }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public String getTier() {
-        return tier;
-    }
-
-    public boolean isAdmin() {
-        return isAdmin;
-    }
-
-    public Organization getOrganization() {
-        return organization;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public void setTier(String tier) {
-        this.tier = tier;
-    }
-
-    public void setAdmin(boolean admin) {
-        isAdmin = admin;
-    }
-
-    public void setOrganization(Organization organization) {
-        this.organization = organization;
-    }
+    public void setUsername(String username) { this.username = username; }
+    public void setPassword(String password) { this.password = password; }
+    public void setTier(String tier) { this.tier = tier; }
+    public void setAdmin(boolean admin) { isAdmin = admin; }
+    public void setOrganization(Organization organization) { this.organization = organization; }
 }
